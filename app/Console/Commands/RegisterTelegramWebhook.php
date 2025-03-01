@@ -1,10 +1,10 @@
 <?php
 
-namespace App\Console\Commands;
+namespace AppConsoleCommands;
 
-use Illuminate\Console\Command;
-use Illuminate\Support\Facades\Http;
-use Illuminate\Http\Client\ConnectionException;
+use IlluminateConsoleCommand;
+use IlluminateSupportFacadesHttp;
+use IlluminateHttpClientConnectionException;
 
 class RegisterTelegramWebhook extends Command
 {
@@ -18,6 +18,13 @@ class RegisterTelegramWebhook extends Command
 
         if (empty($token) || empty($webhookUrl)) {
             $this->error('Telegram bot token or webhook URL is not configured in .env file');
+            return self::FAILURE;
+        }
+
+        if (!str_starts_with($webhookUrl, 'https://')) {
+            $this->error('Webhook URL must start with https://');
+            $this->info('Please update your TELEGRAM_WEBHOOK_URL in .env file to use HTTPS');
+            $this->info('Example: https://your-domain.com/api/telegram/webhook');
             return self::FAILURE;
         }
 
