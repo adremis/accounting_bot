@@ -17,7 +17,7 @@ class RegisterTelegramWebhook extends Command
 
         if (empty($token) || empty($webhookUrl)) {
             $this->error('Telegram bot token or webhook URL is not configured in .env file');
-            return 1;
+            return self::FAILURE;
         }
 
         $response = Http::post("https://api.telegram.org/bot{$token}/setWebhook", [
@@ -27,11 +27,11 @@ class RegisterTelegramWebhook extends Command
         if ($response->successful()) {
             $this->info('Webhook registered successfully!');
             $this->info('Response: ' . $response->body());
-            return 0;
+            return Self::SUCCESS;
         }
 
         $this->error('Failed to register webhook');
         $this->error('Response: ' . $response->body());
-        return 1;
+        return self::FAILURE;
     }
 }
