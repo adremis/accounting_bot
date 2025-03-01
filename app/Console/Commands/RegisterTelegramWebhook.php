@@ -4,6 +4,7 @@ namespace App\Console\Commands;
 
 use Illuminate\Console\Command;
 use Illuminate\Support\Facades\Http;
+use Illuminate\Http\Client\ConnectionException;
 
 class RegisterTelegramWebhook extends Command
 {
@@ -20,18 +21,35 @@ class RegisterTelegramWebhook extends Command
             return self::FAILURE;
         }
 
-        $response = Http::post("https://api.telegram.org/bot{$token}/setWebhook", [
-            'url' => $webhookUrl
-        ]);
+        try {
+            $response = Http::withOptions([
+                'verify' => true,
+                'timeout' => 30,
+            ])->post("https://api.telegram.org/bot{$token}/setWebhook", [
+                'url' => $webhookUrl
+            ]);
 
-        if ($response->successful()) {
-            $this->info('Webhook registered successfully!');
-            $this->info('Response: ' . $response->body());
-            return Self::SUCCESS;
+            if ($response->successful()) {
+                $this->info('Webhook registered successfully!');
+                $this->info('Response: ' . $response->body());
+                return self::SUCCESS;
+            }
+
+            $this->error('Failed to register webhook');
+            $this->error('Response: ' . $response->body());
+            return self::FAILURE;
+
+        } catch (ConnectionException $e) {
+            $this->error('Connection Error: ' . $e->getMessage());
+            $this->info('\nTroubleshooting tips:');
+            $this->info('1. Check your internet connection');
+            $this->info('2. Verify if api.telegram.org is accessible from your network');
+            $this->info('3. Check if your SSL certificates are up to date');
+            $this->info('4. Try using a VPN if you\'re in a restricted region');
+            return self::FAILURE;
+        } catch (\Exception $e) {
+            $this->error('Unexpected Error: ' . $e->getMessage());
+            return self::FAILURE;
         }
-
-        $this->error('Failed to register webhook');
-        $this->error('Response: ' . $response->body());
-        return self::FAILURE;
     }
 }
